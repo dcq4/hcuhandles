@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FAFAFA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DM runs HCU">
+<title>DM runs · HCU</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128172;</text></svg>">
+<style>
+:root{--ink:#262626;--paper:#FAFAFA;--card:#FFF;--line:#DBDBDB;--muted:#8E8E8E;
+  --blue:#0095F6;--red:#ED4956;
+  --sans:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',system-ui,'Segoe UI',Roboto,sans-serif;
+  --grad:linear-gradient(45deg,#FEDA75 0%,#FA7E1E 25%,#D62976 50%,#962FBF 75%,#4F5BD5 100%);}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--paper);}
+body{font-family:var(--sans);color:var(--ink);
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;}
+.wrap{max-width:600px;margin:0 auto;padding:22px 18px calc(72px + env(safe-area-inset-bottom));}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.eyebrow{font-family:var(--sans);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;}
+.live{display:flex;align-items:center;gap:6px;font-family:var(--sans);
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.dot{width:7px;height:7px;border-radius:99px;background:#C7C7C7;}
+.dot.on{background:#4BB543;box-shadow:0 0 0 3px rgba(75,181,67,.16);}
+.dot.err{background:var(--red);}
+
+h1{font-size:33px;font-weight:700;letter-spacing:-.03em;line-height:1.08;margin:0 0 8px;}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.sub{font-size:14px;color:var(--muted);line-height:1.55;margin:0 0 24px;max-width:44ch;}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.card{display:flex;flex-direction:column;justify-content:space-between;min-height:150px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:18px 16px 16px;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  overflow:hidden;transition:border-color .18s,transform .18s,box-shadow .18s;}
+.card:hover{border-color:#B9B9B9;transform:translateY(-2px);box-shadow:0 6px 18px -10px rgba(38,38,38,.3);}
+.card:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+.card.complete{border-color:transparent;box-shadow:0 0 0 1.5px #D62976 inset;}
+.cardname{font-size:19px;font-weight:600;letter-spacing:-.02em;line-height:1.22;}
+.cardfoot{margin-top:auto;}
+.bignum{font-family:var(--sans);font-size:23px;font-weight:500;
+  letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1;}
+.bignum span{color:var(--muted);font-size:15px;}
+.cardmeta{font-family:var(--sans);font-size:11px;color:var(--muted);
+  margin-top:5px;letter-spacing:.03em;}
+.track{height:3px;border-radius:99px;background:#EFEFEF;margin-top:12px;overflow:hidden;}
+.fill{height:100%;border-radius:99px;background:var(--grad);transition:width .3s;}
+
+.pickhead{font-size:28px;font-weight:800;letter-spacing:-.03em;margin:2px 0 20px;}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.wcard{position:relative;display:flex;flex-direction:column;justify-content:space-between;
+  min-height:162px;border-radius:18px;padding:15px 16px 16px;cursor:pointer;border:0;
+  text-align:left;font:inherit;overflow:hidden;transition:transform .18s,box-shadow .18s;}
+.wcard:hover{transform:translateY(-2px);box-shadow:0 14px 30px -16px rgba(0,0,0,.45);}
+.wcard:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+.wtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:auto;}
+.wbrand{font-size:12px;font-weight:800;letter-spacing:.01em;}
+.wchip{width:27px;height:20px;border-radius:5px;flex:none;margin-left:auto;
+  background:linear-gradient(135deg,#F1D586,#C6A24A);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+.wchip::after{content:"";position:absolute;}
+.wname{font-size:17px;font-weight:700;letter-spacing:-.02em;line-height:1.18;}
+.wamt{font-size:12.5px;margin-top:5px;font-variant-numeric:tabular-nums;opacity:.78;}
+.wamt b{font-weight:800;opacity:1;}
+@media (max-width:360px){.wname{font-size:15.5px;}}
+
+.back{background:none;border:0;padding:0;font:inherit;font-size:13px;color:var(--muted);
+  cursor:pointer;margin-bottom:18px;font-weight:500;}
+.back:hover{color:var(--ink);}
+.weeklab{font-family:var(--sans);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;margin:26px 0 12px;}
+.weeklab.first{margin-top:0;}
+
+.daylist{display:flex;flex-direction:column;margin-bottom:6px;
+  border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden;}
+.day{border-top:1px solid var(--line);}
+.day:first-child{border-top:0;}
+.dayhdr{display:flex;align-items:center;gap:13px;width:100%;background:none;border:0;
+  padding:16px 16px;font:inherit;color:inherit;cursor:pointer;text-align:left;
+  transition:background .15s;}
+.dayhdr:hover{background:#FAFAFA;}
+.dayhdr:focus-visible{outline:2px solid var(--ink);outline-offset:-2px;}
+.day.open .dayhdr{padding-bottom:8px;}
+.dbox{width:26px;height:26px;border-radius:8px;border:2px solid var(--line);flex:none;
+  display:flex;align-items:center;justify-content:center;color:transparent;font-size:14px;
+  transition:background .15s,border-color .15s;}
+.day.complete .dbox{background:var(--grad);border-color:transparent;color:#fff;}
+.dname{font-size:25px;font-weight:800;letter-spacing:-.02em;text-transform:uppercase;line-height:1;}
+.day.complete .dname{color:#D62976;}
+.dcount{margin-left:auto;font-size:14px;font-weight:700;letter-spacing:-.02em;flex:none;
+  font-variant-numeric:tabular-nums;}
+.dcount span{color:var(--muted);font-weight:500;}
+.daybody{padding:0 16px 10px 55px;}
+.dtplrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 6px;}
+.dtpllab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.task{display:flex;align-items:flex-start;gap:13px;padding:14px 0;border-top:1px solid #EFEFEF;}
+.tbox{width:23px;height:23px;border-radius:7px;border:2px solid #D2D2D2;flex:none;background:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;
+  padding:0;margin-top:1px;transition:background .15s,border-color .15s;}
+.tbox.on{background:var(--grad);border-color:transparent;color:#fff;}
+.topen{display:block;flex:1;min-width:0;text-decoration:none;color:inherit;cursor:pointer;}
+.ttext{font-size:15.5px;font-weight:600;letter-spacing:-.01em;word-break:break-all;line-height:1.3;}
+.task.done .ttext{text-decoration:line-through;color:var(--muted);}
+.tsub{font-size:12px;color:var(--muted);margin-top:2px;}
+.tflag{font-size:11.5px;color:#C77700;margin-top:3px;font-weight:500;}
+.rsel{font:inherit;font-size:11.5px;font-weight:600;border-radius:99px;border:1px solid var(--line);
+  background:#fff;color:var(--muted);padding:6px 9px;cursor:pointer;flex:none;margin-top:1px;}
+@media (max-width:360px){.dname{font-size:22px;}.daybody{padding-left:44px;}}
+
+.meter{display:flex;gap:3px;margin:14px 0 22px;}
+.seg{flex:1;height:6px;border-radius:99px;background:#EFEFEF;}
+.seg.on{background:var(--grad);}
+
+.tplbox{border:1px solid var(--line);border-radius:14px;background:var(--card);
+  padding:14px;margin-bottom:22px;}
+.tpllab{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.tplview{white-space:pre-wrap;word-wrap:break-word;font-size:13.5px;line-height:1.6;
+  color:var(--ink);}
+.tplview.loading{color:#B9B9B9;}
+
+.btn{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:8px 14px;
+  font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+  display:inline-block;}
+.btn:hover{background:#1877D2;}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500;}
+.btn.ghost:hover{background:transparent;color:var(--ink);border-color:#B9B9B9;}
+.btn.big{padding:11px 18px;font-size:13px;margin-top:22px;}
+
+.item{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  margin-bottom:8px;overflow:hidden;transition:opacity .2s;}
+.edge{width:4px;flex:none;}
+.body{flex:1;min-width:0;padding:13px 13px 11px;}
+.handle{font-family:var(--sans);font-weight:500;font-size:14.5px;
+  letter-spacing:-.01em;word-break:break-all;line-height:1.35;}
+.dname{font-size:12.5px;color:var(--muted);margin-top:3px;}
+.flag{font-size:11.5px;color:#C77700;margin-top:4px;font-weight:500;}
+.acts{display:flex;align-items:center;gap:7px;margin-top:11px;flex-wrap:wrap;}
+.sel{font:inherit;font-size:12px;font-weight:500;border-radius:8px;border:1px solid var(--line);
+  background:#fff;color:var(--muted);padding:8px;cursor:pointer;max-width:118px;}
+.check{width:34px;height:34px;border-radius:99px;border:2px solid var(--line);background:#fff;
+  cursor:pointer;color:transparent;font-size:15px;flex:none;display:flex;align-items:center;
+  justify-content:center;padding:0;margin-left:auto;transition:background .15s,border-color .15s;}
+.check.on{background:var(--grad);border-color:transparent;color:#fff;}
+.item.done{opacity:.55;}
+.item.done .handle{text-decoration:line-through;}
+
+.tallygrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.stat{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:18px 16px;
+  min-height:118px;display:flex;flex-direction:column;justify-content:space-between;}
+.statnum{font-family:var(--sans);font-size:34px;font-weight:500;
+  letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;}
+.statlab{font-size:13px;font-weight:600;margin-top:auto;}
+.statsub{font-family:var(--sans);font-size:11px;color:var(--muted);margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:right;font-family:var(--sans);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;padding:0 0 8px;
+  border-bottom:1px solid var(--line);}
+th:first-child{text-align:left;}
+td{padding:10px 0;border-bottom:1px solid var(--line);text-align:right;
+  font-family:var(--sans);font-variant-numeric:tabular-nums;}
+td:first-child{text-align:left;font-family:var(--sans);font-weight:600;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.chip{font-family:var(--sans);font-size:11.5px;border:1px solid var(--line);
+  background:var(--card);border-radius:7px;padding:5px 8px;color:var(--ink);text-decoration:none;}
+.chip:hover{border-color:#B9B9B9;}
+.empty{font-size:13px;color:var(--muted);margin:0;}
+
+.note{font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);
+  margin-top:28px;padding-top:14px;}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#262626;
+  color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;}
+#toast.show{opacity:1;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+@media (max-width:360px){.cardname{font-size:17px;}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="toast"></div>
+
+<script>
+const FLOC_DATA = {"name":"HCU","template":"Heyyy!! I'm part of First Love Houston, a church for young adults in Houston, and I wanted to personally invite you to our ONLY JESUS event on Sunday, Nov. 22 at 1 PM at the Hilton at UH!\n\nIt's going to be an amazing time with great music, community, and a powerful word! Plus, our FREE First Love Cafe will be open with your favorite drinks! ☕️🤭\n\n🎟️ Register for your FREE tickets and save your seat here: https://onlyjesushtx.com/\n\nCheck us out @firstlovehouston! Hope to see you there!!","days":["Mon Nov 16","Tue Nov 17","Wed Nov 18","Thu Nov 19","Fri Nov 20"],"leaders":[{"name":"PA","total":162,"days":[[{"h":"0922.chitown","n":"Robert Douglas","c":"HCU","v":false},{"h":"_angelinac_13","n":"Gina","c":"HCU","v":false},{"h":"acsa_jc_24","n":"Acsa Chundattu","c":"HCU","v":false},{"h":"andreaself_","n":"Andrea Self","c":"HCU","v":false},{"h":"averytrevino6","n":"Avery Trevino","c":"HCU","v":false},{"h":"blaykepigott","n":"blayke pigott","c":"HCU","v":false},{"h":"carolyn_denson11","n":"𝖢𝖺𝗋𝗈𝗅𝗒𝗇","c":"HCU","v":false},{"h":"clawzbynicole","n":"𝐊𝐀𝐓𝐘 𝐍𝐀𝐈𝐋𝐓𝐄𝐂𝐇","c":"HCU","v":false},{"h":"danieldayjesus","n":"Daniel De Jesus","c":"HCU","v":false},{"h":"djredds_htx","n":"DJ Redds","c":"HCU","v":false},{"h":"emilymayah2006","n":"Emily","c":"HCU","v":false},{"h":"fathiia_1","n":"Fathia","c":"HCU","v":false},{"h":"gilmoregallifreygirl","n":"Rory Tidwell","c":"HCU","v":false},{"h":"hola_amigaali","n":"Alisha Lara","c":"HCU","v":false},{"h":"itsjair_zzz","n":"🦦","c":"HCU","v":false},{"h":"jamarion2962","n":"Jamarion","c":"HCU","v":false},{"h":"joseline_.r","n":"j o s e l i n e","c":"HCU","v":false},{"h":"k.kassidyrene","n":"kass💐","c":"HCU","v":false},{"h":"kirin_kiranx","n":"Kiran","c":"HCU","v":false},{"h":"leeneee_","n":"9/20","c":"HCU","v":false},{"h":"lovealways.quinn","n":"Quinn !!","c":"HCU","v":false},{"h":"mariadpbb","n":"Maria ♡","c":"HCU","v":false},{"h":"molly_rodent","n":"Molly Carnes","c":"HCU","v":false},{"h":"n_atalie_flores","n":"Natalie Flores","c":"HCU","v":false},{"h":"officialjoshjr","n":"Joshua Edwards Jr","c":"HCU","v":false},{"h":"pplanetolivia_","n":"24hoursofLivia","c":"HCU","v":false},{"h":"rodriguez.isaac0","n":"ISAAC","c":"HCU","v":false},{"h":"shawnschoellkopf","n":"Shawn Schoellkopf","c":"HCU","v":false},{"h":"stevogotthejuice","n":"stevo","c":"HCU","v":false},{"h":"therealkayrianna_16","n":"Kayrianna Upton","c":"HCU","v":false},{"h":"ucancallmevivi","n":"Trần Vi","c":"HCU","v":false},{"h":"why_keiki","n":"Keiki Garibay","c":"HCU","v":false},{"h":"zareasworldd_","n":"ms.hurthearts ۫𔘓","c":"HCU","v":false}],[{"h":"3jslynn","n":"jslynn ♡","c":"HCU","v":false},{"h":"_itsmellyy_","n":"Melly Mel �","c":"HCU","v":false},{"h":"adryyy0010","n":"Adryy","c":"HCU","v":false},{"h":"angeliqueemontess","n":"kiki","c":"HCU","v":false},{"h":"b.briii07","n":"bri🌺","c":"HCU","v":false},{"h":"br.i.ann_","n":"Bri🌸","c":"HCU","v":false},{"h":"cecilia.bokutu","n":"Cecilia Bokutu","c":"HCU","v":false},{"h":"coronel_kimberly","n":"Kimberly Kirkeeide Coronel","c":"HCU","v":false},{"h":"darkskinnbby.ty","n":"","c":"HCU","v":false},{"h":"dr_prettyfancy","n":"Mommy. Wife. Doctor.  In that order 💃","c":"HCU","v":false},{"h":"enlistedsoldier._","n":"s̵̛̙t̷̄͜a̴̼͒ṭ̵̾u̷̥͒ș̵́:̵̠͝ ̷̓ē̸r̸̅r̵̍o̶̎r̷̈́","c":"HCU","v":false},{"h":"froggies2015","n":"Ida Duran","c":"HCU","v":false},{"h":"goat.jadonn","n":"Jadon〽️","c":"HCU","v":false},{"h":"htx.jj655","n":"Josh","c":"HCU","v":false},{"h":"itsmskiki2u","n":"Ms Kiki","c":"HCU","v":false},{"h":"jc3pokemoncollects","n":"JC3 Pokemon Collects","c":"HCU","v":false},{"h":"josue.iglesias5","n":"Josue Iglesias","c":"HCU","v":false},{"h":"kaitlyyn.lopez","n":"kaitlyn 💋","c":"HCU","v":false},{"h":"kriscaponne","n":"kriscaponne","c":"HCU","v":false},{"h":"lhernandez2328","n":"Lorraine Hernandez","c":"HCU","v":false},{"h":"lxv_camilla","n":"Camilla<3","c":"HCU","v":false},{"h":"maryori._.o","n":"Ms. Oseguera🇲🇽🦅💃🏻","c":"HCU","v":false},{"h":"mor.maybell","n":"🕷🕷Mor Maybell🕷🕷","c":"HCU","v":false},{"h":"neasejennifer","n":"Jennifer Daniel Nease","c":"HCU","v":false},{"h":"omayrageorge","n":"Omayra George","c":"HCU","v":false},{"h":"promise.henderson","n":"Promise Henderson","c":"HCU","v":false},{"h":"rtx_luis43","n":"","c":"HCU","v":false},{"h":"shetallent92","n":"Shelby Tallent","c":"HCU","v":false},{"h":"sweett0416","n":"Tisha Hardy","c":"HCU","v":false},{"h":"thuyluv_kam","n":"Kamee🥀🦇❤️","c":"HCU","v":false},{"h":"val.isa_pulido","n":"Valentina Pulido","c":"HCU","v":false},{"h":"with_love.ashley","n":"Ashley Waggoner","c":"HCU","v":false},{"h":"ziyahmalae","n":"ziy ..🏳️‍🌈","c":"HCU","v":false}],[{"h":"4real_denim","n":"Denim","c":"HCU","v":false},{"h":"_prettygirl_neviah","n":"PrettygirlTimeline🫂.","c":"HCU","v":false},{"h":"alainadahila_","n":"Alaina","c":"HCU","v":false},{"h":"annie.n08","n":"𝐴𝑛𝑛𝑖𝑒","c":"HCU","v":false},{"h":"b_3wanca","n":"jackie h","c":"HCU","v":false},{"h":"bris.ange1s","n":"brielle 🇵🇷🇩🇪🌺🌊","c":"HCU","v":false},{"h":"chillat.k1","n":"KJ🥷","c":"HCU","v":false},{"h":"crl_andrew","n":"Andrew","c":"HCU","v":false},{"h":"davito1290","n":"David Collins","c":"HCU","v":false},{"h":"dxbbiep","n":"","c":"HCU","v":false},{"h":"ev07_07","n":"Eva Vanegas","c":"HCU","v":false},{"h":"furrr.ballz","n":"peach.fuzzzzz","c":"HCU","v":false},{"h":"gracekathryn._11","n":"grace💗","c":"HCU","v":false},{"h":"iamyosie","n":"adeyosola","c":"HCU","v":false},{"h":"itzmichelle81","n":"ïtz.mîçhëllê81","c":"HCU","v":false},{"h":"jennsroebuck","n":"Jennifer Roebuck","c":"HCU","v":false},{"h":"jrmcgee23","n":"jordan","c":"HCU","v":false},{"h":"karleighlackey","n":"Karleigh","c":"HCU","v":false},{"h":"kucerabaseballco","n":"Justin Kucera","c":"HCU","v":false},{"h":"lifew.karla","n":"Karla Argueta","c":"HCU","v":false},{"h":"m_tallent16","n":"mary tallent","c":"HCU","v":false},{"h":"meadow_grim","n":"meadow grimland","c":"HCU","v":false},{"h":"moustafa.kyalimpa","n":"Moustafa","c":"HCU","v":false},{"h":"nikeboy.official_","n":"","c":"HCU","v":false},{"h":"patosucksatlife06","n":"New guess","c":"HCU","v":false},{"h":"pumpkinspiceteacake","n":"SySy","c":"HCU","v":false},{"h":"salvoboycarlos","n":"Carlos Merlos","c":"HCU","v":false},{"h":"silvaeliezer","n":"Eliezer Silva","c":"HCU","v":false},{"h":"tasha_.346","n":"natasha 💖","c":"HCU","v":false},{"h":"toriiaao","n":"Victoria Oliver","c":"HCU","v":false},{"h":"victorias_layne","n":"TORIA♥️","c":"HCU","v":false},{"h":"xit.nely","n":"Nely 🌸","c":"HCU","v":false}],[{"h":"_.iiamalayisha","n":"alayisha mai’lyn💗","c":"HCU","v":false},{"h":"_samkl1","n":"","c":"HCU","v":false},{"h":"alivya.jamyaxo","n":"ms. queen 🎀😚","c":"HCU","v":false},{"h":"arib3rry","n":"ari ^^","c":"HCU","v":false},{"h":"beberandel12","n":"Madi","c":"HCU","v":false},{"h":"bubbles.bugg","n":"Bailey Billiot","c":"HCU","v":false},{"h":"chris_matula_25","n":"chris","c":"HCU","v":false},{"h":"curtiscindymorgan","n":"Cindy Morgan","c":"HCU","v":false},{"h":"denissedd21","n":"Denisse Diaz","c":"HCU","v":false},{"h":"ejojo1121","n":"Emma Jo Johnson","c":"HCU","v":false},{"h":"eyez_on_t","n":"T R I N A","c":"HCU","v":false},{"h":"g1oryandgor3","n":"Ebony","c":"HCU","v":false},{"h":"halireagan_","n":"Hali Reagan 👾","c":"HCU","v":false},{"h":"isabel_rincon2006","n":"izzy_ig","c":"HCU","v":false},{"h":"j5sskkiionablock","n":"J5skii💚🦅","c":"HCU","v":false},{"h":"jey.phoenix_","n":"Jey🌈🌈","c":"HCU","v":false},{"h":"juliesfriends","n":"Julie Gehrman Mallory","c":"HCU","v":false},{"h":"kellerbroussard","n":"Keller Broussard","c":"HCU","v":false},{"h":"kyrah_johnson_0123","n":"Kyrah Johnson","c":"HCU","v":false},{"h":"liz_yuki50","n":"liz","c":"HCU","v":false},{"h":"madelyne.davis","n":"Madelyne Davis","c":"HCU","v":false},{"h":"mia.s8390","n":"","c":"HCU","v":false},{"h":"mspris1","n":"mspris1","c":"HCU","v":false},{"h":"noahispug","n":"Noah","c":"HCU","v":false},{"h":"paytonnn_05","n":"Payton","c":"HCU","v":false},{"h":"ray_back_ribs","n":"Kaden Patton","c":"HCU","v":false},{"h":"saragrace.__","n":"sara grace🪩","c":"HCU","v":false},{"h":"smt_aida","n":"abraham","c":"HCU","v":false},{"h":"thaitexanqueen","n":"Vanarat Amy Prakoth Raimondo","c":"HCU","v":false},{"h":"truly_deuce","n":"Steven Morris","c":"HCU","v":false},{"h":"vitalizationwellness","n":"Vitalization Wellness","c":"HCU","v":false},{"h":"xoxo.nariahh","n":"","c":"HCU","v":false}],[{"h":"____dreamsuv_ni","n":"orb","c":"HCU","v":false},{"h":"a.marek.a","n":"Marek","c":"HCU","v":false},{"h":"amarilisrivera.oficial","n":"Amarilis Rivera","c":"HCU","v":false},{"h":"ashanti8376","n":"𝓐𝓼𝓱𝓪𝓷𝓽𝓲 𝓦𝓲𝓵𝓵𝓲𝓪𝓶𝓼","c":"HCU","v":false},{"h":"benny_haywood1","n":"Benny Haywood","c":"HCU","v":false},{"h":"c.miller008","n":"Colten Miller","c":"HCU","v":false},{"h":"ciarramariie_","n":"","c":"HCU","v":false},{"h":"dallasunseen_7","n":"dallasunseen","c":"HCU","v":false},{"h":"diorlivin.ray3","n":"","c":"HCU","v":false},{"h":"em.five55","n":"5️⃣","c":"HCU","v":false},{"h":"faith.pray.uplift","n":"","c":"HCU","v":false},{"h":"gabrielthomas5257","n":"Gabriel Thomas","c":"HCU","v":false},{"h":"helovesbells","n":"Bells🤍","c":"HCU","v":false},{"h":"its.m.e.l.y","n":"Mely☆Ramírez","c":"HCU","v":false},{"h":"jacobrmz_","n":"","c":"HCU","v":false},{"h":"jonas.gipson39","n":"Gibby","c":"HCU","v":false},{"h":"just.elizabeth._","n":"Liz","c":"HCU","v":false},{"h":"kes_studygroup","n":"KES | Kingdom Excellence Study group","c":"HCU","v":false},{"h":"landenbgill","n":"Landen Gill","c":"HCU","v":false},{"h":"looes.wav","n":"luis","c":"HCU","v":false},{"h":"maleydyyy.xoxoxo","n":"ℳ𝒶𝓁ℯ𝓎𝒹𝓎🎀🌸","c":"HCU","v":false},{"h":"mjspriv___","n":"","c":"HCU","v":false},{"h":"mykal.mayers","n":"Helena","c":"HCU","v":false},{"h":"notsohenry","n":"Henry","c":"HCU","v":false},{"h":"pink0_tx","n":"Pinkston","c":"HCU","v":false},{"h":"rennykim2021","n":"Renny","c":"HCU","v":false},{"h":"sb._4yl1n","n":"Aylin","c":"HCU","v":false},{"h":"sovereignson7","n":"SoveReign","c":"HCU","v":false},{"h":"the_mamalori2","n":"Lori LuckyLee Ortiz-Ramirez","c":"HCU","v":false},{"h":"tx_nick1","n":"","c":"HCU","v":false},{"h":"where_is.17","n":"stevo","c":"HCU","v":false},{"h":"yondr._","n":"kingston","c":"HCU","v":false}]]},{"name":"Joojo","total":162,"days":[[{"h":"0nlyciaraa","n":"𝘊𝘪𝘢𝘳𝘢 …","c":"HCU","v":false},{"h":"_barrion_","n":"Barrion⚡️","c":"HCU","v":false},{"h":"adara.hannah","n":"","c":"HCU","v":false},{"h":"andrew.hobbs4","n":"Andrew Hobbs","c":"HCU","v":false},{"h":"aww.ally","n":"Nicol ✶","c":"HCU","v":false},{"h":"bmbc_angel","n":"Blanche Braswell","c":"HCU","v":false},{"h":"cassiecurtis_","n":"Cassie Curtis","c":"HCU","v":false},{"h":"coffyhanchett","n":"coffy hanchett gray","c":"HCU","v":false},{"h":"danigodog777","n":"Nathanael Holland","c":"HCU","v":false},{"h":"dkg_dtx","n":"Darrius G. Real Estate 🏡","c":"HCU","v":false},{"h":"emma_elaine14","n":"Emma Erwin","c":"HCU","v":false},{"h":"fh_hehuha1","n":"Angie 💐","c":"HCU","v":false},{"h":"giselle_izag","n":"Giselle Izaguirre","c":"HCU","v":false},{"h":"htx.eli011","n":"🇨🇴🇸🇻","c":"HCU","v":false},{"h":"itsme_rolo","n":"rolo","c":"HCU","v":false},{"h":"janette_fuster_beltran","n":"Janette Eo-Eo Fuster Beltran","c":"HCU","v":false},{"h":"josep.hm13","n":"Joseph Malisa","c":"HCU","v":false},{"h":"k1ngj_18","n":"","c":"HCU","v":false},{"h":"kitlee59","n":"Kitlee Williams","c":"HCU","v":false},{"h":"leesi_pooh","n":"Aleesia💜","c":"HCU","v":false},{"h":"lovehowyouheal","n":"Kiara Thomas","c":"HCU","v":false},{"h":"marisol.s9","n":"","c":"HCU","v":false},{"h":"monobitas","n":"Carmen Lira","c":"HCU","v":false},{"h":"nannygrams9","n":"Teresa Davis Graham","c":"HCU","v":false},{"h":"officiallizethh","n":"LizVibesOnly","c":"HCU","v":false},{"h":"pr1ncess.rara","n":"Sarah","c":"HCU","v":false},{"h":"rosamartinezcuellar","n":"Rosa Martinez Cuellar","c":"HCU","v":false},{"h":"shayo_ajibade","n":"Shayo","c":"HCU","v":false},{"h":"storm_svalen23","n":"Lene Sofia","c":"HCU","v":false},{"h":"they.lovetianna","n":"Tianna Luvvs","c":"HCU","v":false},{"h":"uniquehxney","n":"king bob","c":"HCU","v":false},{"h":"willowgraceee_","n":"","c":"HCU","v":false},{"h":"zaria.stokes_","n":"Zaria Stokes","c":"HCU","v":false}],[{"h":"3skylarfojtilk3","n":"Skylar Fojtik","c":"HCU","v":false},{"h":"_kaiiitlyn._","n":"","c":"HCU","v":false},{"h":"adryyyy_0016","n":"🤍","c":"HCU","v":false},{"h":"angy28silva","n":"Angelly Patino","c":"HCU","v":false},{"h":"b.powers07","n":"Blake","c":"HCU","v":false},{"h":"bradjoseph03","n":"Brad Joseph","c":"HCU","v":false},{"h":"certified.chriss","n":"†","c":"HCU","v":false},{"h":"cp.buchanan","n":"Chastity Buchanan","c":"HCU","v":false},{"h":"datboidrewb","n":"Andrew Beal","c":"HCU","v":false},{"h":"dreannaspivey","n":"dreanna spivey","c":"HCU","v":false},{"h":"enriqu_e07","n":"EnriqueE","c":"HCU","v":false},{"h":"fromm_4723","n":"hannah","c":"HCU","v":false},{"h":"godsson3357","n":"RayGoHard","c":"HCU","v":false},{"h":"i.smaell_","n":"ismael","c":"HCU","v":false},{"h":"itss.niecyy","n":"","c":"HCU","v":false},{"h":"jcperozocroes","n":"Juan Carlos Perozo","c":"HCU","v":false},{"h":"jovanni_melchor","n":"Jovanni","c":"HCU","v":false},{"h":"kamatapatty","n":"Patty Kamata","c":"HCU","v":false},{"h":"krissy_5505","n":"k r i s t i n a ⋆༺𓆩☠︎︎𓆪༻⋆","c":"HCU","v":false},{"h":"libsloo123","n":"Libby🎀","c":"HCU","v":false},{"h":"m.ariana17_","n":"ℳ❀","c":"HCU","v":false},{"h":"mason_mer11","n":"Mason Mersereau","c":"HCU","v":false},{"h":"moraeliah","n":"Moraeliah🤎","c":"HCU","v":false},{"h":"neida_rivero2","n":"Neida Rivero","c":"HCU","v":false},{"h":"oswaldx_81","n":"Oswaldx 17","c":"HCU","v":false},{"h":"pstrsteve1984","n":"Stephen Ammons","c":"HCU","v":false},{"h":"rxbidoobi","n":"rubi 🖤","c":"HCU","v":false},{"h":"shiznette","n":"Shanette Smith","c":"HCU","v":false},{"h":"sydney.garrett07","n":"Sydney","c":"HCU","v":false},{"h":"tiffanysdesignernails","n":"Tiffany's Designer Nails","c":"HCU","v":false},{"h":"vanarich","n":"Ivana Richardson","c":"HCU","v":false},{"h":"wyrickmom","n":"Patricia Wyrick","c":"HCU","v":false},{"h":"zkrs_closet","n":"Z⚡️","c":"HCU","v":false}],[{"h":"4sn.carrington_","n":"carrot😈👺","c":"HCU","v":false},{"h":"_projectty","n":"Ty","c":"HCU","v":false},{"h":"alepavon_v","n":"Ale Pavón","c":"HCU","v":false},{"h":"anstewart0314","n":"Alyssa Stewart","c":"HCU","v":false},{"h":"baileighb0p","n":"baileigh b","c":"HCU","v":false},{"h":"brittany_clement0","n":"Brittany Clement","c":"HCU","v":false},{"h":"chloe2richards","n":"Chloe Jane","c":"HCU","v":false},{"h":"crystalcowdenmcgill","n":"Crystal Cowden McGill","c":"HCU","v":false},{"h":"davo.450","n":"Kale","c":"HCU","v":false},{"h":"dxni_chacha","n":"Denisse Chavarria","c":"HCU","v":false},{"h":"evie_kay_05","n":"Evelyn Chavez-Corral","c":"HCU","v":false},{"h":"fwtx_austin26","n":"Austin Brewer","c":"HCU","v":false},{"h":"gracewang.126","n":"Grace Wang","c":"HCU","v":false},{"h":"ian_rodriguez_10","n":"Ian","c":"HCU","v":false},{"h":"itzznot.ariee","n":"ARIE💕","c":"HCU","v":false},{"h":"jennycheatham1","n":"Jenny Cheatham","c":"HCU","v":false},{"h":"juanito_clownboy","n":"Juan “Silly” Reyna 🌳🦜","c":"HCU","v":false},{"h":"katelynpinkston","n":"Katelyn 𖡼𖤣𖥧","c":"HCU","v":false},{"h":"kylah_rayy","n":"Kylah","c":"HCU","v":false},{"h":"linndddy","n":"lindaverdecia_07","c":"HCU","v":false},{"h":"macdoctsh","n":"Haude Tshimanga","c":"HCU","v":false},{"h":"meganwarlick24","n":"Megan Warlick","c":"HCU","v":false},{"h":"mrsbethlongoria","n":"Elizabeth Longoria","c":"HCU","v":false},{"h":"nmachi_i","n":"nmachi✨🇳🇬","c":"HCU","v":false},{"h":"patricia_mendez05","n":"Patricia Mendez","c":"HCU","v":false},{"h":"qjessica0216","n":"jessica Quintero","c":"HCU","v":false},{"h":"samredwine16","n":"Samantha Redwine","c":"HCU","v":false},{"h":"sim1d_","n":"Simone Dabney","c":"HCU","v":false},{"h":"taylor_da_teapot","n":"Taylor","c":"HCU","v":false},{"h":"travis.salazar81","n":"Travis Salazar","c":"HCU","v":false},{"h":"vikkihayden6","n":"vikki hayden","c":"HCU","v":false},{"h":"xo.aniaaaa","n":"Nia.","c":"HCU","v":false}],[{"h":"_.kenthadoll","n":"Kendall💕","c":"HCU","v":false},{"h":"_yklayy","n":"lay","c":"HCU","v":false},{"h":"allisonhopearias","n":"Allison Arias","c":"HCU","v":false},{"h":"aritzel.p","n":"Aritzel Pastrana","c":"HCU","v":false},{"h":"becomingjasminee","n":"Jas 🤍","c":"HCU","v":false},{"h":"bubbly_bella08","n":"Bella Lazukic","c":"HCU","v":false},{"h":"chriscarratala","n":"Chris 🇨🇺","c":"HCU","v":false},{"h":"cyrasroom","n":"CY","c":"HCU","v":false},{"h":"deybreak_","n":"Deybreak","c":"HCU","v":false},{"h":"elijahsuds","n":"Elijah Sudarma","c":"HCU","v":false},{"h":"eyinadeadebowale","n":"Adebowale eyinade","c":"HCU","v":false},{"h":"gabba_gaba","n":"gabby_222✨🎶","c":"HCU","v":false},{"h":"harleycadenson","n":"Caden","c":"HCU","v":false},{"h":"it_didnt_kill_me_magazine","n":"It Didn’t Kill Me MAGAZINE (SOW)","c":"HCU","v":false},{"h":"jacksonkmcgill","n":"Jackson McGill","c":"HCU","v":false},{"h":"jiehuicui1121","n":"Cjjjhh.","c":"HCU","v":false},{"h":"juni0rr0","n":"Juniorr","c":"HCU","v":false},{"h":"kellib8022025","n":"Kelli Marie","c":"HCU","v":false},{"h":"ladymostyle1","n":"Lady Mostyle","c":"HCU","v":false},{"h":"lizzv1111","n":"Liz Valdez","c":"HCU","v":false},{"h":"madisonjcooley","n":"Madison Cooley","c":"HCU","v":false},{"h":"miavic1245","n":"Mia","c":"HCU","v":false},{"h":"muddysoul","n":"MuddySoul Guerrero","c":"HCU","v":false},{"h":"nolimittdae","n":"","c":"HCU","v":false},{"h":"penelopesuk_","n":"Penelope Romero","c":"HCU","v":false},{"h":"rebecca.m.w.04","n":"Rebecca Werner","c":"HCU","v":false},{"h":"sarahhh_hndz","n":"ﾠ","c":"HCU","v":false},{"h":"sofia_agarza","n":"sofia","c":"HCU","v":false},{"h":"that.boyjay08","n":"Jay","c":"HCU","v":false},{"h":"truly_leahh","n":"","c":"HCU","v":false},{"h":"vttorro","n":"Nathan","c":"HCU","v":false},{"h":"xrmbz.0","n":"Ari Jimenez Mahecha","c":"HCU","v":false}],[{"h":"__brianna__lee__","n":"Brianna Jean Lee (李美純)","c":"HCU","v":false},{"h":"a_sith22","n":"Abigail Fick","c":"HCU","v":false},{"h":"amarilisvillacorta","n":"Amarilis Villacorta","c":"HCU","v":false},{"h":"astro_mo","n":"Moises","c":"HCU","v":false},{"h":"bia.emii","n":"emii 🫧","c":"HCU","v":false},{"h":"caitlyn_pratt05","n":"caitlyn rayne","c":"HCU","v":false},{"h":"cici_hak07","n":"ch♡⃛rié𝜗𝜚","c":"HCU","v":false},{"h":"daltongang9","n":"Crystall Dalton","c":"HCU","v":false},{"h":"diorr.kara","n":"Kara Akabane","c":"HCU","v":false},{"h":"emily.l.dye","n":"emily!","c":"HCU","v":false},{"h":"faith_phil413","n":"Faith🥰","c":"HCU","v":false},{"h":"gculstudent20","n":"Gculstudnet20","c":"HCU","v":false},{"h":"hen_carrillo25","n":"Hennessy Carrillo","c":"HCU","v":false},{"h":"its_le0200800","n":"Leonna🎀","c":"HCU","v":false},{"h":"jaela_isabelle","n":"JAELA!","c":"HCU","v":false},{"h":"jonathan.bermudez07","n":"Jonathan Bermudez🇵🇷","c":"HCU","v":false},{"h":"just_jad","n":"Jayde Jewel","c":"HCU","v":false},{"h":"ki.lagg","n":"Kimberly","c":"HCU","v":false},{"h":"lane_rosebaum","n":"Lane Rosenbaum_PV","c":"HCU","v":false},{"h":"loreina_p","n":"Loreina😊🍀","c":"HCU","v":false},{"h":"mapleorbit284","n":"Villavechiabro","c":"HCU","v":false},{"h":"mkee_kee","n":"MiKayla Stuart","c":"HCU","v":false},{"h":"mykeriah._","n":"My’Keriah🫶🏾","c":"HCU","v":false},{"h":"nuno.rrr","n":"𝕵𝖔𝖊𝖑 𝕽𝖔𝖒𝖊𝖗𝖔","c":"HCU","v":false},{"h":"pinkyfingerout","n":"✨💖Pinky💖✨","c":"HCU","v":false},{"h":"returnofcincoo","n":"𝓙𝓪𝓵𝓮𝓪𝓵 “𝓬𝓲𝓷𝓬𝓸𝓸” 𝓐𝓵𝓵𝓮𝓷","c":"HCU","v":false},{"h":"seabunniiee","n":"𝖲𝖺𝗏𝖺𝗇𝗇𝖺𝗁","c":"HCU","v":false},{"h":"ssarahszn","n":"Sarah O","c":"HCU","v":false},{"h":"theeejaydaaliah","n":"Jayda.","c":"HCU","v":false},{"h":"txausmom","n":"Krista Wade","c":"HCU","v":false},{"h":"wherejaytee","n":"JT🔑","c":"HCU","v":false},{"h":"young_jpaz","n":"Jacob","c":"HCU","v":false}]]},{"name":"Precious","total":162,"days":[[{"h":"1dk.d4wn","n":"Dawn","c":"HCU","v":false},{"h":"_brookeac","n":"brooke <3","c":"HCU","v":false},{"h":"adore.chris1","n":"","c":"HCU","v":false},{"h":"angelahindes07","n":"Angela Hindes","c":"HCU","v":false},{"h":"aye_aye_ron04","n":"Aaron","c":"HCU","v":false},{"h":"boethius_house","n":"BOETHIUS","c":"HCU","v":false},{"h":"catchercrawley","n":"Catcher Crawley","c":"HCU","v":false},{"h":"coily_niyaa","n":"Niyaa🐆🌷","c":"HCU","v":false},{"h":"danscot964","n":"Scott Wadsworth","c":"HCU","v":false},{"h":"dmantheone2","n":"","c":"HCU","v":false},{"h":"emmacsmith3","n":"Emma Smith","c":"HCU","v":false},{"h":"fr.ashley__","n":"","c":"HCU","v":false},{"h":"giselleealv","n":"Giselle🪷","c":"HCU","v":false},{"h":"htx.jacqui.g","n":"","c":"HCU","v":false},{"h":"itsme_vivi105","n":"vivianna🙃","c":"HCU","v":false},{"h":"jaylen.hill.80","n":"Jaylen Hill","c":"HCU","v":false},{"h":"joshcrawford621","n":"Josh Crawford","c":"HCU","v":false},{"h":"k1ran.nicole","n":"kiran 🪼","c":"HCU","v":false},{"h":"kkarlaanaya","n":"karla","c":"HCU","v":false},{"h":"lek.laxton","n":"LoLax","c":"HCU","v":false},{"h":"luvnlyfe_1127","n":"Sharonda Cato","c":"HCU","v":false},{"h":"martenet_","n":"Martene Deanne","c":"HCU","v":false},{"h":"monovalee_08","n":"Andreaa 💕","c":"HCU","v":false},{"h":"nathan__7575","n":"Nathan","c":"HCU","v":false},{"h":"oh_jeebs","n":"Jeannie Newbury","c":"HCU","v":false},{"h":"priscillaaboagewaa_official","n":"Aboagyewaa🇬🇭💜","c":"HCU","v":false},{"h":"rosie_flores","n":"Rosie Flores","c":"HCU","v":false},{"h":"sheis_blessedd","n":"jaida✝️","c":"HCU","v":false},{"h":"sudo_neon","n":"Sterling","c":"HCU","v":false},{"h":"theyhatemarz","n":"Amari Brito","c":"HCU","v":false},{"h":"unkno_abk","n":"pablo","c":"HCU","v":false},{"h":"willyumkg","n":"üg|¥ & T€næcious","c":"HCU","v":false},{"h":"zaydfuller_","n":"Zayd fuller","c":"HCU","v":false}],[{"h":"409.bigchat","n":"🧊🧊","c":"HCU","v":false},{"h":"_kswo0","n":"Ida🐞","c":"HCU","v":false},{"h":"aidanbates._","n":"Aidan Bates","c":"HCU","v":false},{"h":"annamzfl_","n":"Anna Martínez","c":"HCU","v":false},{"h":"b.reyona","n":"𝑘𝑒𝑛𝑧𝑖𝑒🥥.","c":"HCU","v":false},{"h":"bradshawfitnesscenter","n":"HBU Bradshaw Fitness Center","c":"HCU","v":false},{"h":"chapeln19","n":"Chapel Nease","c":"HCU","v":false},{"h":"cr320417","n":"Carlos🇺🇸🇻🇪","c":"HCU","v":false},{"h":"dav0ski","n":"Davion Ridgeway","c":"HCU","v":false},{"h":"drewisthaone","n":"Drewbo","c":"HCU","v":false},{"h":"erkillinger","n":"Elizabeth Richmond Killinger","c":"HCU","v":false},{"h":"fssss.566","n":"Felis Wang","c":"HCU","v":false},{"h":"godwinav23","n":"Abuchi Godwin","c":"HCU","v":false},{"h":"iamchasegray_","n":"","c":"HCU","v":false},{"h":"itz.malea101","n":"Malea💕","c":"HCU","v":false},{"h":"jennahunt_volleyball","n":"Jenna Hunt","c":"HCU","v":false},{"h":"joya.euhus","n":"Joya Euhus","c":"HCU","v":false},{"h":"kamiraunique._","n":"𝗺𝐢𝐫𝐚★","c":"HCU","v":false},{"h":"kstone_abc","n":"(ﾒ￣▽￣)︻┳═一","c":"HCU","v":false},{"h":"life.w.jasmine","n":"Jasmine","c":"HCU","v":false},{"h":"m3specialties_","n":"M3SPECIALTIES","c":"HCU","v":false},{"h":"mattkelley2002","n":"Matthew Kelley","c":"HCU","v":false},{"h":"morales_home_of_chaos","n":"🤍MELISSA & STEVE MORALES🤍","c":"HCU","v":false},{"h":"nessa._.nxtdoor","n":"🧿Nessa🧿","c":"HCU","v":false},{"h":"pais.lynn.pay","n":"Paisley Rogers","c":"HCU","v":false},{"h":"psychonico_0828_0609","n":"ETHAN🕺😎😭🙇‍♂️😁👍🎃👻💀🕸️👨‍💻🤘📍📚🎓","c":"HCU","v":false},{"h":"s4mmy.23","n":"Samantha ✞","c":"HCU","v":false},{"h":"shunchappell5","n":"Demkia Chappell","c":"HCU","v":false},{"h":"tacodinoxl","n":"Asher","c":"HCU","v":false},{"h":"tikitikigal","n":"Jamie Arnold-Lazukic","c":"HCU","v":false},{"h":"vee._.listens","n":"✶ vee ✶","c":"HCU","v":false},{"h":"xarisxmz_","n":"Xaris Jimenez","c":"HCU","v":false},{"h":"zoey.asoha","n":"","c":"HCU","v":false}],[{"h":"6ode10","n":"B O D E","c":"HCU","v":false},{"h":"_queenlady_a","n":"Lady A","c":"HCU","v":false},{"h":"alexanderchac0","n":"Alexander Garcia","c":"HCU","v":false},{"h":"anthonell_4","n":"Stefania","c":"HCU","v":false},{"h":"bailey04barbara","n":"🍃💕🍃 Barbara B. Bailey 🍃💕🍃","c":"HCU","v":false},{"h":"brooklynn.maliyah","n":"Brooklynn Kimbrough","c":"HCU","v":false},{"h":"chris.schaupp","n":"Chris Schaupp","c":"HCU","v":false},{"h":"csice._","n":"","c":"HCU","v":false},{"h":"deahdaigle","n":"Deah Daigle","c":"HCU","v":false},{"h":"edithv.v","n":"Edith Velzqz","c":"HCU","v":false},{"h":"extraordinarysimi_","n":"✨Darasimi✨","c":"HCU","v":false},{"h":"fxllenmariah","n":"mariahh","c":"HCU","v":false},{"h":"grande_matheuzzzz","n":"Matheus Alencar","c":"HCU","v":false},{"h":"icecream_moondust","n":"Eyescream","c":"HCU","v":false},{"h":"iy_07_31","n":"","c":"HCU","v":false},{"h":"jeri.sackett","n":"Jeri Sackett","c":"HCU","v":false},{"h":"juanwithjesus","n":"Juan","c":"HCU","v":false},{"h":"kechaunaivory","n":"Ke’Chauna Ivory🦋","c":"HCU","v":false},{"h":"kymora_williams","n":"Kymora Williams","c":"HCU","v":false},{"h":"liv_1706","n":"","c":"HCU","v":false},{"h":"maddy.arw","n":"Madds 🌷","c":"HCU","v":false},{"h":"menorzin__7ee7","n":"usuario nao encontrado","c":"HCU","v":false},{"h":"mrz.barr_momoftwo","n":"SilverBarr","c":"HCU","v":false},{"h":"noahbusbyjeffries","n":"Noah","c":"HCU","v":false},{"h":"patriciacors","n":"Patricia Cors","c":"HCU","v":false},{"h":"queenbosslady04","n":"Delanderia Ball - Anderson","c":"HCU","v":false},{"h":"samuelmikerivera005","n":"Sammy Rivera","c":"HCU","v":false},{"h":"slatboyjayy","n":"jayreala","c":"HCU","v":false},{"h":"tehrani2211","n":"Farshad Tehrani👪🇺🇸☮️","c":"HCU","v":false},{"h":"trin_jaramillo","n":"Trinity Jaramillo","c":"HCU","v":false},{"h":"villacorta183","n":"Edusj","c":"HCU","v":false},{"h":"xo.jenayyy","n":"Jenay","c":"HCU","v":false}],[{"h":"_.piscesking._","n":"Sean","c":"HCU","v":false},{"h":"a.iiddaann","n":"","c":"HCU","v":false},{"h":"alul713","n":"Alexandria Chung","c":"HCU","v":false},{"h":"art_gameclass","n":"Le le","c":"HCU","v":false},{"h":"bellevlzqz","n":"Isabel Velazquez","c":"HCU","v":false},{"h":"buenrostro74","n":"Tanya Buenrostro","c":"HCU","v":false},{"h":"chx1dish","n":"H8TED","c":"HCU","v":false},{"h":"dabratt.syaaa","n":"sya mec🫧le’ 🩰 .","c":"HCU","v":false},{"h":"dfwhairsavage","n":"Trakenya F Hayes","c":"HCU","v":false},{"h":"elizabethkfaulkner","n":"Lizzie","c":"HCU","v":false},{"h":"fabianmorales.pathway","n":"Fabian Morales | FUA Sports","c":"HCU","v":false},{"h":"gabbby.o","n":"gabby!","c":"HCU","v":false},{"h":"hashim.jaffa","n":"Hashim Jaffa","c":"HCU","v":false},{"h":"itens117","n":"Iten Onsi","c":"HCU","v":false},{"h":"jacobjprice_film","n":"Jake Price","c":"HCU","v":false},{"h":"jj_haveemup","n":"J👨🏾‍🦯‍➡️","c":"HCU","v":false},{"h":"juniorx._4","n":"🕷️","c":"HCU","v":false},{"h":"kem_arcov","n":"𝐹𝑙𝑜𝑟 ❀","c":"HCU","v":false},{"h":"laffertytamal","n":"Lafferty Tamal","c":"HCU","v":false},{"h":"ljz0003","n":"ljz0003","c":"HCU","v":false},{"h":"madisonn.clayy","n":"Madison","c":"HCU","v":false},{"h":"miguelovesjesus","n":"Miguel","c":"HCU","v":false},{"h":"mutoni08","n":"Darlene🎀","c":"HCU","v":false},{"h":"nomiinghton","n":"°nomi°","c":"HCU","v":false},{"h":"phonem_ning","n":"ning","c":"HCU","v":false},{"h":"rechorder","n":"kaydence  ♬","c":"HCU","v":false},{"h":"sav_rain27","n":"savanna","c":"HCU","v":false},{"h":"sofii.3x_","n":"Sofi ꨄ","c":"HCU","v":false},{"h":"the.darianlewisjr","n":"Darian Lewis","c":"HCU","v":false},{"h":"trulyy.nini","n":"🤍Bean✨️","c":"HCU","v":false},{"h":"waccis2much","n":"David","c":"HCU","v":false},{"h":"xvcnatalie","n":"natalie","c":"HCU","v":false}],[{"h":"__xavien__","n":"Zay","c":"HCU","v":false},{"h":"aaliyyahh1_","n":"Ꭰᥲᥒเ۵","c":"HCU","v":false},{"h":"andrea.jordan13","n":"𝒜𝓃𝒹𝓇𝑒𝒶🤍","c":"HCU","v":false},{"h":"aubrie.raen","n":"aubrie magee","c":"HCU","v":false},{"h":"bianca_amerigo","n":"Bianca Amerigo","c":"HCU","v":false},{"h":"camdenmethvin","n":"Cam Methvin","c":"HCU","v":false},{"h":"cillamcava","n":"Cilla","c":"HCU","v":false},{"h":"daniel_jacob31","n":"Daniel Jacob","c":"HCU","v":false},{"h":"dirty_money_team","n":"Allen Halbardier","c":"HCU","v":false},{"h":"emily.moraiss__","n":"𝑒𝑚𝑖𝑙𝑦","c":"HCU","v":false},{"h":"fancykingz","n":"לְחַבֵּ Semitic 🇳🇬🇭🇰🇺🇸","c":"HCU","v":false},{"h":"geetanjalisabu","n":"Anjali Nair 🧿💫","c":"HCU","v":false},{"h":"heyitsbriana0","n":"Briana Jackson","c":"HCU","v":false},{"h":"its_yareli.g","n":"Yareli 🦋","c":"HCU","v":false},{"h":"jakecemcdaniel","n":"Jakece D. McDaniel","c":"HCU","v":false},{"h":"jorge_021508","n":"Jorge","c":"HCU","v":false},{"h":"justtt.daisyyy","n":"Daisy  🎀🌸","c":"HCU","v":false},{"h":"kimberlymladd","n":"Kimberly Trochesset Ladd","c":"HCU","v":false},{"h":"lchristerrundlof","n":"LChrister Rundlof","c":"HCU","v":false},{"h":"lotus.chantel","n":"Aidan Sewell","c":"HCU","v":false},{"h":"marcusgortiz","n":"","c":"HCU","v":false},{"h":"modcm5","n":"Modou","c":"HCU","v":false},{"h":"n.witdashifts","n":"","c":"HCU","v":false},{"h":"nwrhinoceros","n":"NaWa","c":"HCU","v":false},{"h":"pipaiscrazy","n":"Ash","c":"HCU","v":false},{"h":"rjpking3","n":"Reginald Jamal Pettway","c":"HCU","v":false},{"h":"serena_ward2030","n":"Rena🌷","c":"HCU","v":false},{"h":"stefhany3094","n":"stefhany","c":"HCU","v":false},{"h":"thekkasia_","n":"kasia wheeler","c":"HCU","v":false},{"h":"txnkie2jxdy","n":"Romans 8:18","c":"HCU","v":false},{"h":"whereyougoingshoya","n":"junior","c":"HCU","v":false},{"h":"yourfav._myah","n":"Myah 🥰","c":"HCU","v":false}]]},{"name":"Naa","total":161,"days":[[{"h":"1k._shaad1","n":"","c":"HCU","v":false},{"h":"_cris.cross.apple.sauce_","n":"Cristofer Rodriguez","c":"HCU","v":false},{"h":"adore.wunmii","n":"","c":"HCU","v":false},{"h":"angelica_rod28","n":"Angelica Rodriguez","c":"HCU","v":false},{"h":"ayoaronn","n":"Aaron","c":"HCU","v":false},{"h":"bookie.lazlo","n":"","c":"HCU","v":false},{"h":"cdbahrs","n":"C Bahrs","c":"HCU","v":false},{"h":"cooper_james_31","n":"Cooper Roebuck 🤓👽👻🤖","c":"HCU","v":false},{"h":"danyiah_c","n":"D_C","c":"HCU","v":false},{"h":"domitrini_barbie","n":"Shadia","c":"HCU","v":false},{"h":"emyrsen.grace","n":"𝐸𝓂𝓎𝓇𝓈𝑒𝓃 - 𝒢𝓇𝒶𝒸𝑒 𝐸𝓁𝑒𝓇𝓎","c":"HCU","v":false},{"h":"freda_deesha","n":"Freda Deesha","c":"HCU","v":false},{"h":"gnss3_","n":"𝐆𝐄𝐍𝐄𝐒𝐈𝐒𐙚","c":"HCU","v":false},{"h":"htx.jeilene","n":"Jeilene🖤","c":"HCU","v":false},{"h":"itsmj_lol","n":"MJ","c":"HCU","v":false},{"h":"jaymus_mndez","n":"Jaymus Mendez","c":"HCU","v":false},{"h":"joshyoderrr","n":"Josh yoder","c":"HCU","v":false},{"h":"kadimuke2","n":"Joshua Palma","c":"HCU","v":false},{"h":"kreative_kailee","n":"Kailee","c":"HCU","v":false},{"h":"leylapesina22","n":"Leyla Pesina","c":"HCU","v":false},{"h":"luvv._.natyys","n":"𝙽𝚊𝚝𝚢𖣂","c":"HCU","v":false},{"h":"martincarranza932","n":"Martin André Carranza","c":"HCU","v":false},{"h":"mopo2508","n":"Cristian Pacheco","c":"HCU","v":false},{"h":"nattievibes_","n":"Natalie Portales","c":"HCU","v":false},{"h":"ollivander_18","n":"Ellie Nore","c":"HCU","v":false},{"h":"professionalclownary_","n":"GoofyGoober🥜🤡","c":"HCU","v":false},{"h":"royu13_","n":"Yusuf Abubakar","c":"HCU","v":false},{"h":"sheluvv.joseph_","n":"Joseph💫🖤","c":"HCU","v":false},{"h":"sunkissed_jada","n":"Jada Edwards","c":"HCU","v":false},{"h":"theyluv.athesiaa","n":"𝕒𝕥𝕙𝕖𝕤𝕚𝕒💗","c":"HCU","v":false},{"h":"v3aniix","n":"Nevaeh Akiva","c":"HCU","v":false},{"h":"winniebuggiee","n":"Winnie🐞","c":"HCU","v":false},{"h":"zimora___","n":"Zimora Hamilton","c":"HCU","v":false}],[{"h":"4201_tina","n":"Tina","c":"HCU","v":false},{"h":"_pr3ttyfac3.shay_","n":"ℙ𝕐𝕋💋","c":"HCU","v":false},{"h":"ajrich._","n":"Anthony Richardson Jr.","c":"HCU","v":false},{"h":"annicacessan","n":"Annica Caesar","c":"HCU","v":false},{"h":"b3ckluvsmatcha","n":"Beck","c":"HCU","v":false},{"h":"branthadawn","n":"BranThaDawn","c":"HCU","v":false},{"h":"cheyanne_naranjo","n":"Cheyanne Naranjo","c":"HCU","v":false},{"h":"creed.mp3","n":"Caleb","c":"HCU","v":false},{"h":"davion_wallace04","n":"Davion Wallace","c":"HCU","v":false},{"h":"dvxlii_","n":"KメC💎","c":"HCU","v":false},{"h":"ethanschifelbein","n":"Ethan Schifelbein","c":"HCU","v":false},{"h":"fuentes_lety","n":"Leticia Fuentes","c":"HCU","v":false},{"h":"gogettakelv","n":"卂丫卂ㄥ卂","c":"HCU","v":false},{"h":"iamth3wildcard","n":"Andrea Brown","c":"HCU","v":false},{"h":"itz_just_ale_07","n":"𝒜𝓁𝑒𝓈𝓈𝒶𝓃𝒹𝓇𝒶 𝒢𝑜𝓂𝑒𝓏-𝒢𝑜𝓂𝑒𝓏","c":"HCU","v":false},{"h":"jennifercihlar","n":"Jenn Cihlar","c":"HCU","v":false},{"h":"jptorres._","n":"Jp Torres","c":"HCU","v":false},{"h":"karla.michele9","n":"Karla M.Sánchez","c":"HCU","v":false},{"h":"kt504_","n":"KT🃏","c":"HCU","v":false},{"h":"lifesaving_livv","n":"🫶","c":"HCU","v":false},{"h":"m_estrella77x7","n":"Melanie","c":"HCU","v":false},{"h":"mayra.lopez.06","n":"Mayra Lopez","c":"HCU","v":false},{"h":"morelia9533","n":"morelia Garcia","c":"HCU","v":false},{"h":"nest_0f_4","n":"Sandra Reyna","c":"HCU","v":false},{"h":"pamelaprovince","n":"Pamela Hall—Province","c":"HCU","v":false},{"h":"pt2.isaaaa","n":"isa ᥫ᭡","c":"HCU","v":false},{"h":"saint.ryusei","n":"12.","c":"HCU","v":false},{"h":"silean.15","n":"Silean Sue","c":"HCU","v":false},{"h":"tamarajohnson2746","n":"Tamara Johnson","c":"HCU","v":false},{"h":"tootie_morris","n":"Tootie Morris","c":"HCU","v":false},{"h":"vibes._.withmj","n":"Mahogany","c":"HCU","v":false},{"h":"xclusive_ky","n":"","c":"HCU","v":false}],[{"h":"713.all3x","n":"","c":"HCU","v":false},{"h":"_s.sarai","n":"sarai  ݁˖❤︎ིྀ","c":"HCU","v":false},{"h":"alexiss.wilridge","n":"alexis wilridge","c":"HCU","v":false},{"h":"aptoyama","n":"Annette Precella Toyama","c":"HCU","v":false},{"h":"ban_the_nana","n":"Danna Banana","c":"HCU","v":false},{"h":"brx_nh","n":"rey","c":"HCU","v":false},{"h":"chris_martyns","n":"Christian Nsowaah","c":"HCU","v":false},{"h":"csmink88","n":"Cyndi Smink","c":"HCU","v":false},{"h":"deborahloveskirby","n":"Deborah","c":"HCU","v":false},{"h":"eji_luxuryhair","n":"EJI","c":"HCU","v":false},{"h":"eyesbeopen","n":"David Adebiyi","c":"HCU","v":false},{"h":"g.abbby_","n":"gabby <3","c":"HCU","v":false},{"h":"h_stahl08","n":"Hannah Stahl","c":"HCU","v":false},{"h":"ini.dayo_","n":"Inioluwa","c":"HCU","v":false},{"h":"izzy.723","n":"isabelle","c":"HCU","v":false},{"h":"jessicalhedges","n":"Jessica Hedges","c":"HCU","v":false},{"h":"julessmthn","n":"Julius","c":"HCU","v":false},{"h":"keilaaa.mmm","n":"Kᴇɪʟᴀ Mᴀʀᴛɪɴᴇᴢ🦋","c":"HCU","v":false},{"h":"kynleigh_513","n":"Kynleigh Adcock","c":"HCU","v":false},{"h":"liz.07.foxx","n":"Margaret Elizabeth","c":"HCU","v":false},{"h":"maddzasiaz4","n":"Maddie","c":"HCU","v":false},{"h":"metallicgazelle","n":"RRH","c":"HCU","v":false},{"h":"ms.diamond_queen","n":"Diamond Dunbar","c":"HCU","v":false},{"h":"noahhhparker","n":"Noah Parker","c":"HCU","v":false},{"h":"paulinatgarcia74","n":"Paulina Garcia","c":"HCU","v":false},{"h":"ralittleme","n":"Becky Alma","c":"HCU","v":false},{"h":"sandy.joe_","n":"Sandy Joe","c":"HCU","v":false},{"h":"slumqyy","n":"Jeremiah Queen","c":"HCU","v":false},{"h":"tera_hennesy","n":"Tera Hennesy","c":"HCU","v":false},{"h":"trinityw_05","n":"","c":"HCU","v":false},{"h":"virusjdetected","n":"virusj","c":"HCU","v":false},{"h":"xo.tamaria","n":"Tamaria Smith","c":"HCU","v":false}],[{"h":"_.vanessa.r_1","n":"Vanessa Reyes","c":"HCU","v":false},{"h":"a.m1raclee","n":"","c":"HCU","v":false},{"h":"amara_e412","n":"Amarachi Ejim","c":"HCU","v":false},{"h":"artjosietrujillo","n":"Josie Art Trujillo","c":"HCU","v":false},{"h":"benjadabos_","n":"Benjamin Dabos","c":"HCU","v":false},{"h":"bulldogcheerleader.03","n":"YazGomez","c":"HCU","v":false},{"h":"ciannale.ne3","n":"🌼🪿✨💝🎀 !!","c":"HCU","v":false},{"h":"daikon930","n":"maddie ⋆.˚𖦹⋆✮⋆.˚","c":"HCU","v":false},{"h":"dianarcesar","n":"diana ¨̮","c":"HCU","v":false},{"h":"ellebelle_23","n":"Elly Neal","c":"HCU","v":false},{"h":"faerie.queene.517","n":"FaerieQueene517","c":"HCU","v":false},{"h":"gabbyherfindahl_6","n":"Gabby Herfindahl","c":"HCU","v":false},{"h":"heaven_minded_3","n":"Jarcel JD Lawson","c":"HCU","v":false},{"h":"its.all_karinaa","n":"Karina ♡","c":"HCU","v":false},{"h":"jacobmiller.30","n":"Jacob M","c":"HCU","v":false},{"h":"jocelynjimenz","n":"Jocelyn","c":"HCU","v":false},{"h":"just.a7fr_ed","n":"𝔄𝔩𝔣𝔯𝔢𝔡🫠","c":"HCU","v":false},{"h":"kendal.krailo","n":"Kendal Krailo","c":"HCU","v":false},{"h":"lanchit_00","n":"espy","c":"HCU","v":false},{"h":"llaura_bbermudez","n":"Laura Bermudez ❤️🏝","c":"HCU","v":false},{"h":"makensie_princess","n":"makensie ୨୧","c":"HCU","v":false},{"h":"mikmak.moore","n":"Makenzie Moore","c":"HCU","v":false},{"h":"mya_anzaldua","n":"Mya Anzaldua","c":"HCU","v":false},{"h":"normavpr","n":"Norma Paredes","c":"HCU","v":false},{"h":"phreshcarter","n":"phreshcarter","c":"HCU","v":false},{"h":"redwhiteandblueeyes","n":"Morgan Gartner","c":"HCU","v":false},{"h":"saved_n_tattted","n":"CharlesAllen Turrubiate","c":"HCU","v":false},{"h":"sophia_leigh2005","n":"Sophia Dicks","c":"HCU","v":false},{"h":"the0neand0nly_naya","n":"Naya🌸🦋","c":"HCU","v":false},{"h":"tshimanga747","n":"Didier Tshimanga","c":"HCU","v":false},{"h":"waldocdn","n":"WaldoCDN","c":"HCU","v":false},{"h":"yaximus6","n":"Wily Yaxon","c":"HCU","v":false}],[{"h":"_ablan_gran64","n":"","c":"HCU","v":false},{"h":"abbyd_05","n":"Abigail","c":"HCU","v":false},{"h":"andrea.nrdz","n":"andrea nicole ◡̈","c":"HCU","v":false},{"h":"austinrodriguez904","n":"Austin Rodriguez","c":"HCU","v":false},{"h":"big_ben_mulholland","n":"Ben Mulholland","c":"HCU","v":false},{"h":"cardhydra_77","n":"Josh","c":"HCU","v":false},{"h":"cinthiaorozco8","n":"cinthia orozco","c":"HCU","v":false},{"h":"danielaibarra_07","n":"daniela ibarra 💐💛","c":"HCU","v":false},{"h":"dishapatel1001","n":"Disha Patel","c":"HCU","v":false},{"h":"emily.moraissss0","n":"","c":"HCU","v":false},{"h":"faraon_pf93873","n":"micaaa","c":"HCU","v":false},{"h":"gen_857","n":"𝐆𝐞𝐧𝐞𝐯𝐢𝐞𝐯𝐞 ♡︎","c":"HCU","v":false},{"h":"heyitsmeariiiii","n":"Ari ♡","c":"HCU","v":false},{"h":"itsangel_g5","n":"Angel😎✨","c":"HCU","v":false},{"h":"jalindaaaaa","n":"Ja’Linda 🌟","c":"HCU","v":false},{"h":"jos_noguera","n":"Joselyn Noguera","c":"HCU","v":false},{"h":"jw_2005.1","n":"Joshua white","c":"HCU","v":false},{"h":"kimdauriac","n":"Kim Dauriac","c":"HCU","v":false},{"h":"leahstrech","n":"Leah Strech","c":"HCU","v":false},{"h":"lotus_1a","n":"Janie Salazar","c":"HCU","v":false},{"h":"mariaalmorales","n":"","c":"HCU","v":false},{"h":"molliescrochetcorner","n":"Mollie Gonzales","c":"HCU","v":false},{"h":"n3hemiah.smith","n":"nehemiah.smith","c":"HCU","v":false},{"h":"official.leakss","n":"Rodney Leaks 👽","c":"HCU","v":false},{"h":"po.tente","n":"Alberto","c":"HCU","v":false},{"h":"robin.keiffer","n":"Robin Keiffer","c":"HCU","v":false},{"h":"sh4e1essness_17","n":"","c":"HCU","v":false},{"h":"stephanieleblanc110","n":"Stephanie LeBlanc","c":"HCU","v":false},{"h":"theoriginal_c_","n":"Symone","c":"HCU","v":false},{"h":"txs.vene","n":"𝓥𝓮𝓷𝓮𝓬𝓲𝓪🦢","c":"HCU","v":false},{"h":"whos._dc","n":"Sean","c":"HCU","v":false},{"h":"zakk_v2","n":"zakk villarreal ✝️","c":"HCU","v":false}]]}]};
+const AREAS = [FLOC_DATA];
+
+const SB_URL = "https://ldsnkotzkkvaxkiwfviv.supabase.co";
+const SB_KEY = "sb_publishable_K0uUuBsyhqpakwxn1T2KuQ_iZayUcWa";
+const REST = SB_URL + "/rest/v1";
+const HEAD = {apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json"};
+
+const CAMPUS = {
+  TSU:{label:"TSU",color:"#D62976"},
+  UH:{label:"UH",color:"#4F5BD5"},
+  MIX:{label:"TSU",color:"#D62976"},
+  A2:{label:"",color:"#7A5AF8"},HCU:{label:"",color:"#7A5AF8"},
+  FLOC:{label:"",color:"#C13584"}
+};
+const RESP = {
+  yes:{label:"Yes",color:"#0095F6",bg:"#E7F4FE"},
+  no:{label:"No",color:"#ED4956",bg:"#FDECEE"},
+  none:{label:"No reply",color:"#8E8E8E",bg:"#F1F1F1"}
+};
+const RESP_ORDER = ["yes","no","none"];
+const CARDCOLORS = [
+  {bg:"#1E1E20", ink:"#FFFFFF"}, {bg:"#EBE4D5", ink:"#2A2620"},
+  {bg:"#CFE8D2", ink:"#1E3A2A"}, {bg:"#F6D7E4", ink:"#47283A"},
+  {bg:"#D3CCF6", ink:"#2C2860"}, {bg:"#F7C89A", ink:"#5A3416"},
+  {bg:"#C0E3EE", ink:"#123E4C"}, {bg:"#2A2540", ink:"#ECEAFF"},
+  {bg:"#F4D775", ink:"#4A3A00"}, {bg:"#DCEBB2", ink:"#35410E"},
+  {bg:"#F3B7B0", ink:"#532420"}, {bg:"#C6B8E8", ink:"#2E2350"}
+];
+const WEEKDAY = {Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+function dayParts(label){
+  const p = String(label).trim().split(/\s+/);
+  return {wd:(WEEKDAY[p[0]] || p[0] || "").toUpperCase(), date:p.slice(1).join(" ")};
+}
+const PLACEHOLDER = "Loading the team template\u2026";
+const FALLBACK_TPL = "hey! we're Ready @ 20 \ud83d\udc4b an on-campus community\n\nWe're doing an event called Coffee & Christ Thursday August 27 \u2014 free coffee + donuts, and a room full of people also figuring out their first semester.\n\n\ud83d\udccd SEC 102 (Science & Engineering Classroom Building)\n\ud83d\udcc5 Thursday, Aug 27\n\ud83d\udd57 8:00\n\nCome by yourself or bring your whole floor, either works. Follow @firstlovehouston so you don't miss what's next \ud83e\udd0d";
+
+let area = null, leader = null, day = null, view = "area", openDay = null;
+let status = {}, tpl = FALLBACK_TPL, conn = "sync";
+let since = "1970-01-01T00:00:00Z";
+function CUR(){ return AREAS[area]; }
+const TPL_A1 = `Hey! 👋 I'm from Ready @ 20, an on-campus community for UH & TSU students.
+
+We're hosting Coffee & Christ on Thursday, August 27—a live podcast-style conversation about life, faith, and college, with free food, refreshments, and a room full of people also figuring out their first semester.
+
+Students from both UH and TSU are welcome! If you have any questions, lmk! 😁
+
+📍 SEC 102 (Science & Engineering Classroom Building, University of Houston)
+📅 Thursday, Aug. 27
+🕗 8:00 PM
+
+Follow @firstlovehouston so you don't miss what's next!`;
+function curTpl(){ return (CUR() && CUR().template) ? CUR().template : (tpl || FALLBACK_TPL); }
+
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sent = h => !!(status[h] && status[h].sent);
+const respOf = h => (status[h] && status[h].response) || "";
+const dayDone = (li,di) => CUR().leaders[li].days[di].filter(x => sent(x.h)).length;
+const leaderDone = li => CUR().leaders[li].days.reduce((s,d) => s + d.filter(x => sent(x.h)).length, 0);
+
+function copyText(txt){
+  try{
+    const ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.setAttribute("readonly","");
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;";
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0, txt.length);
+    let ok = false;
+    try{ ok = document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).catch(function(){});
+      ok = true;
+    }
+    return ok;
+  }catch(e){ return false; }
+}
+
+function msgFor(handle){
+  let item = null;
+  CUR().leaders.forEach(function(l){ l.days.forEach(function(d){
+    d.forEach(function(x){ if(x.h === handle) item = x; }); }); });
+  return (curTpl() || "").replace(/\{name\}/g, (item && item.n) || "there");
+}
+
+let toastTimer;
+function flash(m){
+  const t = document.getElementById("toast");
+  t.textContent = m; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1700);
+}
+
+/* ---------------- data ---------------- */
+function mergeRows(rows){
+  if(!rows || !rows.length) return;
+  rows.forEach(r => {
+    status[r.handle] = {sent:r.sent, response:r.response};
+    if(r.updated_at > since) since = r.updated_at;
+  });
+}
+
+async function pull(all){
+  try{
+    const q = all ? "" : "&updated_at=gt." + encodeURIComponent(since);
+    const r = await fetch(REST + "/dm_status?select=handle,sent,response,updated_at" + q, {headers:HEAD});
+    if(!r.ok) throw new Error(r.status);
+    mergeRows(await r.json());
+    const t = await fetch(REST + "/dm_settings?key=eq.template&select=value", {headers:HEAD});
+    const tv = await t.json();
+    if(tv[0]) tpl = tv[0].value || FALLBACK_TPL;
+    conn = "live";
+  }catch(e){ conn = "off"; }
+  render();
+}
+
+async function push(handle, patch){
+  const cur = status[handle] || {sent:false, response:null};
+  const row = {
+    handle: handle,
+    leader_idx: leader == null ? 0 : leader,
+    sent: patch.sent !== undefined ? patch.sent : cur.sent,
+    response: patch.response !== undefined ? patch.response : cur.response,
+    updated_at: new Date().toISOString()
+  };
+  status[handle] = {sent:row.sent, response:row.response};
+  render();
+  try{
+    const r = await fetch(REST + "/dm_status", {
+      method:"POST",
+      headers: Object.assign({}, HEAD, {Prefer:"resolution=merge-duplicates,return=minimal"}),
+      body: JSON.stringify(row)
+    });
+    if(!r.ok) throw new Error(r.status);
+    conn = "live";
+  }catch(e){ conn = "off"; flash("Didn't save \u2014 check your signal"); }
+  render();
+}
+
+/* ---------------- views ---------------- */
+function liveHTML(){
+  const cls = conn === "live" ? "on" : conn === "off" ? "err" : "";
+  const txt = conn === "live" ? "Live" : conn === "off" ? "Offline" : "Syncing";
+  return '<div class="live"><span class="dot ' + cls + '"></span>' + txt + '</div>';
+}
+
+function cardHTML(name, done, total, act){
+  const pct = total ? (done / total) * 100 : 0;
+  return '<button class="card' + (total && done === total ? " complete" : "") + '" ' + act + '>' +
+    '<div class="cardname">' + esc(name) + '</div>' +
+    '<div class="cardfoot">' +
+      '<div class="bignum">' + done + '<span>/' + total + '</span></div>' +
+      '<div class="cardmeta">' + (total && done === total ? "all sent" : "sent") + '</div>' +
+      '<div class="track"><div class="fill" style="width:' + pct + '%"></div></div>' +
+    '</div></button>';
+}
+
+function walletCard(name, done, total, i, act){
+  const cc = CARDCOLORS[i % CARDCOLORS.length];
+  const complete = total && done === total;
+  return '<button class="wcard" style="background:' + cc.bg + ';color:' + cc.ink + '" ' + act + '>' +
+    '<div class="wtop"><span class="wchip"></span></div>' +
+    '<div>' +
+      '<div class="wname">' + esc(name) + '</div>' +
+      '<div class="wamt"><b>' + done + '</b>/' + total + ' sent' + (complete ? " \u2713" : "") + '</div>' +
+    '</div>' +
+  '</button>';
+}
+
+function areaCard(a, i){
+  const cc = CARDCOLORS[i % CARDCOLORS.length];
+  const handles = a.leaders.reduce((s,l) => s + l.total, 0);
+  return '<button class="wcard" style="background:' + cc.bg + ';color:' + cc.ink + '" data-area="' + i + '">' +
+    '<div class="wtop"><span class="wchip"></span></div>' +
+    '<div>' +
+      '<div class="wname">' + esc(a.name) + '</div>' +
+      '<div class="wamt">' + a.leaders.length + ' leaders \u00b7 ' + handles + ' handles</div>' +
+    '</div>' +
+  '</button>';
+}
+
+function viewArea(){
+  return '<div class="pickhead">DM runs \u00b7 HCU</div>' +
+    '<p class="sub" style="margin:-12px 0 20px">Pick your area to see your team.</p>' +
+    '<div class="wgrid">' +
+      AREAS.map((a,i) => areaCard(a, i)).join("") +
+    '</div>';
+}
+
+function viewPick(){
+  return '<button class="back" data-back="area">\u2190 Areas</button>' +
+    '<div class="pickhead">' + esc(CUR().name) + '</div>' +
+    '<div class="wgrid">' +
+      CUR().leaders.map((l,i) => walletCard(l.name, leaderDone(i), l.total, i, 'data-leader="' + i + '"')).join("") +
+    '</div>' +
+    '<button class="btn ghost big" data-view="tally">See team responses \u2192</button>';
+}
+
+function taskRow(item){
+  const c = CAMPUS[item.c] || CAMPUS.UH;
+  const isS = sent(item.h), r = respOf(item.h);
+  const selStyle = r ? 'style="color:' + RESP[r].color + ';background:' + RESP[r].bg +
+    ';border-color:' + RESP[r].color + '55"' : "";
+  return '<div class="task' + (isS ? " done" : "") + '">' +
+    '<button class="tbox' + (isS ? " on" : "") + '" data-check="' + esc(item.h) +
+      '" aria-pressed="' + isS + '" aria-label="Mark sent">\u2713</button>' +
+    '<a class="topen" href="https://ig.me/m/' + encodeURIComponent(item.h) +
+      '" target="_blank" rel="noreferrer" data-open="' + esc(item.h) +
+      '" title="Copy message + open DM">' +
+      '<div class="ttext">@' + esc(item.h) + '</div>' +
+      ((c.label || item.n) ? '<div class="tsub">' + c.label +
+        (c.label && item.n ? " \u00b7 " : "") + (item.n ? esc(item.n) : "") + '</div>' : "") +
+      (item.v ? '<div class="tflag">Handle was cut off \u2014 check it first</div>' : "") +
+    '</a>' +
+    '<select class="rsel" data-resp="' + esc(item.h) + '" ' + selStyle + '>' +
+      '<option value="">Reply\u2026</option>' +
+      RESP_ORDER.map(k => '<option value="' + k + '"' + (r === k ? " selected" : "") +
+        '>' + RESP[k].label + '</option>').join("") +
+    '</select>' +
+  '</div>';
+}
+
+function dayBlock(di){
+  const L = CUR().leaders[leader];
+  const list = L.days[di], total = list.length, done = dayDone(leader, di);
+  const complete = total && done === total;
+  const dp = dayParts(CUR().days[di]);
+  const open = di === openDay;
+  let h = '<div class="day' + (complete ? " complete" : "") + (open ? " open" : "") + '">' +
+    '<button class="dayhdr" data-toggle="' + di + '" aria-expanded="' + open + '">' +
+      '<span class="dbox">\u2713</span>' +
+      '<span class="dname">' + esc(dp.wd) + '</span>' +
+      '<span class="dcount">' + done + '<span>/' + total + '</span></span>' +
+    '</button>';
+  if(open){
+    h += '<div class="daybody">' +
+      '<div class="dtplrow"><span class="dtpllab">' + esc(dp.date) + ' \u00b7 team message</span>' +
+        '<button class="btn ghost" data-copytpl="1">Copy message</button></div>' +
+      list.map(taskRow).join("") +
+    '</div>';
+  }
+  return h + '</div>';
+}
+
+function viewDays(){
+  const L = CUR().leaders[leader];
+  if(openDay === null) openDay = -1;
+  const days = CUR().days;
+  // group consecutive days into weeks (new week starts on a Monday)
+  const groups = [];
+  days.forEach((lbl, i) => {
+    if(i === 0 || /^Mon/.test(lbl)) groups.push([]);
+    groups[groups.length - 1].push(i);
+  });
+  const weeks = groups.map((g, gi) =>
+    '<div class="weeklab' + (gi === 0 ? " first" : "") + '">Week of ' + dayParts(days[g[0]]).date + '</div>' +
+    '<div class="daylist">' + g.map(di => dayBlock(di)).join("") + '</div>'
+  ).join("");
+  const per = Math.round(L.total / days.length);
+  return '<button class="back" data-back="pick">\u2190 Not ' + esc(L.name) + '?</button>' +
+    '<div class="top"><span class="eyebrow">' + L.total + ' handles \u00b7 ' + days.length + ' days</span>' + liveHTML() + '</div>' +
+    '<h1>' + esc(L.name) + '</h1>' +
+    '<p class="sub">About ' + per + ' a day. Tap a day to open its list, then check each one off as you send.</p>' +
+    weeks +
+    '<button class="btn ghost big" data-view="tally">See team responses \u2192</button>';
+}
+
+function viewList(){
+  const L = CUR().leaders[leader], list = L.days[day], d = dayDone(leader, day);
+  const rows = list.map(item => {
+    const c = CAMPUS[item.c] || CAMPUS.UH;
+    const isS = sent(item.h), r = respOf(item.h);
+    const selStyle = r ? 'style="color:' + RESP[r].color + ';background:' + RESP[r].bg +
+      ';border-color:' + RESP[r].color + '55"' : "";
+    return '<div class="item' + (isS ? " done" : "") + '">' +
+      '<span class="edge" style="background:' + c.color + '"></span>' +
+      '<div class="body">' +
+        '<div class="handle">@' + esc(item.h) + '</div>' +
+        '<div class="dname">' + c.label + (item.n ? " \u00b7 " + esc(item.n) : "") + '</div>' +
+        (item.v ? '<div class="flag">Handle was cut off \u2014 check it first</div>' : "") +
+        '<div class="acts">' +
+          '<a class="btn" href="https://ig.me/m/' + encodeURIComponent(item.h) +
+            '" target="_blank" rel="noreferrer" data-open="' + esc(item.h) +
+            '">Copy + open</a>' +
+          '<button class="btn ghost" data-copy="' + esc(item.h) + '">Copy</button>' +
+          '<select class="sel" data-resp="' + esc(item.h) + '" ' + selStyle + '>' +
+            '<option value="">Reply\u2026</option>' +
+            RESP_ORDER.map(k => '<option value="' + k + '"' + (r === k ? " selected" : "") +
+              '>' + RESP[k].label + '</option>').join("") +
+          '</select>' +
+          '<button class="check' + (isS ? " on" : "") + '" data-check="' + esc(item.h) +
+            '" aria-pressed="' + isS + '" aria-label="Mark sent">\u2713</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join("");
+
+  return '<button class="back" data-back="days">\u2190 ' + esc(L.name) + '\u2019s days</button>' +
+    '<div class="top"><span class="eyebrow">' + esc(CUR().days[day]) + '</span>' + liveHTML() + '</div>' +
+    '<h1>' + d + ' of ' + list.length + ' sent</h1>' +
+    '<div class="meter" aria-hidden="true">' +
+      list.map(x => '<span class="seg' + (sent(x.h) ? " on" : "") + '"></span>').join("") +
+    '</div>' +
+    '<div class="tplbox"><div class="tpllab"><span class="eyebrow">Team message</span>' +
+      '<button class="btn ghost" data-copytpl="1">Copy</button></div>' +
+      '<div class="tplview' + (tpl ? "" : " loading") + '">' + esc(tpl || PLACEHOLDER) + '</div></div>' +
+    rows +
+    '<p class="note">Copy + open puts the message on your clipboard and opens the thread \u2014 long-press the message box in Instagram and hit Paste, then Send. Instagram won\u2019t let an app type into the box for you. Opening a DM marks it sent. Set the reply dropdown once they answer \u2014 it feeds the team tally. Handles from the directory screenshots were read by OCR, so if a profile doesn\u2019t load the username is probably off by a character.</p>';
+}
+
+function viewTally(){
+  const per = CUR().leaders.map(l => {
+    const c = {yes:0, no:0, none:0, sent:0};
+    l.days.forEach(dd => dd.forEach(x => {
+      if(sent(x.h)) c.sent++;
+      const r = respOf(x.h);
+      if(c[r] !== undefined) c[r]++;
+    }));
+    return Object.assign({name:l.name, total:l.total}, c);
+  });
+  const T = per.reduce((a,l) => ({yes:a.yes+l.yes, no:a.no+l.no, none:a.none+l.none, sent:a.sent+l.sent}),
+    {yes:0,no:0,none:0,sent:0});
+  const grand = CUR().leaders.reduce((s,l) => s + l.total, 0);
+  const lists = {yes:[], no:[], none:[]};
+  CUR().leaders.forEach(l => l.days.forEach(dd => dd.forEach(x => {
+    const r = respOf(x.h);
+    if(lists[r]) lists[r].push(x);
+  })));
+
+  const stat = (num, color, lab, sub) =>
+    '<div class="stat"><div class="statnum"' + (color ? ' style="color:' + color + '"' : "") + '>' + num + '</div>' +
+    '<div><div class="statlab">' + lab + '</div><div class="statsub">' + sub + '</div></div></div>';
+
+  return '<button class="back" data-back="' + (leader === null ? "pick" : "days") + '">\u2190 Back</button>' +
+    '<div class="top"><span class="eyebrow">Everyone \u00b7 both weeks</span>' + liveHTML() + '</div>' +
+    '<h1><span class="grad">Responses</span></h1>' +
+    '<p class="sub">' + T.sent + ' of ' + grand + ' DMs sent so far.</p>' +
+    '<div class="tallygrid">' +
+      stat(T.yes, RESP.yes.color, "Said yes", "coming / interested") +
+      stat(T.no, RESP.no.color, "Said no", "not interested") +
+      stat(T.none, RESP.none.color, "No reply", "marked, never answered") +
+      stat(Math.max(T.sent - T.yes - T.no - T.none, 0), "", "Awaiting", "sent, not logged yet") +
+    '</div>' +
+    '<div class="weeklab first">By leader</div>' +
+    '<table><thead><tr><th>Leader</th><th>Sent</th><th>Yes</th><th>No</th><th>No reply</th></tr></thead><tbody>' +
+      per.map(l => '<tr><td>' + esc(l.name) + '</td>' +
+        '<td style="color:var(--muted)">' + l.sent + '/' + l.total + '</td>' +
+        '<td style="color:' + (l.yes ? RESP.yes.color : "var(--muted)") + '">' + l.yes + '</td>' +
+        '<td style="color:' + (l.no ? RESP.no.color : "var(--muted)") + '">' + l.no + '</td>' +
+        '<td style="color:var(--muted)">' + l.none + '</td></tr>').join("") +
+    '</tbody></table>' +
+    RESP_ORDER.map(k =>
+      '<div class="weeklab">' + RESP[k].label + ' \u00b7 ' + lists[k].length + '</div>' +
+      (lists[k].length === 0 ? '<p class="empty">Nothing logged here yet.</p>' :
+        '<div class="chips">' + lists[k].map(x =>
+          '<a class="chip" href="https://ig.me/m/' + encodeURIComponent(x.h) +
+          '" target="_blank" rel="noreferrer" style="border-left:3px solid ' +
+          (CAMPUS[x.c] || CAMPUS.UH).color + '">@' + esc(x.h) + '</a>').join("") + '</div>')
+    ).join("") +
+    '<p class="note">The yes list is your follow-up list \u2014 invite those people personally and add them to the event count. Everyone on the team sees this page.</p>';
+}
+
+function render(){
+  const app = document.getElementById("app");
+  let html;
+  if(area === null) html = viewArea();
+  else if(view === "tally") html = viewTally();
+  else if(leader === null) html = viewPick();
+  else html = viewDays();
+  app.innerHTML = html;
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-area],[data-leader],[data-toggle],[data-view],[data-back],[data-copy],[data-open],[data-check],[data-copytpl]");
+  if(!t) return;
+
+  if(t.dataset.area !== undefined){
+    area = Number(t.dataset.area); leader = null; day = null; openDay = null; view = "pick";
+    try{ localStorage.setItem("dmhcu:area", t.dataset.area); localStorage.removeItem("dmhcu:me"); }catch(err){}
+    return render();
+  }
+  if(t.dataset.leader !== undefined){
+    leader = Number(t.dataset.leader); day = null; view = "days"; openDay = null;
+    try{ localStorage.setItem("dmhcu:me", t.dataset.leader); }catch(err){}
+    return render();
+  }
+  if(t.dataset.toggle !== undefined){
+    const di = Number(t.dataset.toggle);
+    openDay = (openDay === di ? -1 : di);
+    return render();
+  }
+  if(t.dataset.view === "tally"){ view = "tally"; return render(); }
+  if(t.dataset.back){
+    if(t.dataset.back === "area"){
+      area = null; leader = null; day = null; view = "area";
+      try{ localStorage.removeItem("dmhcu:area"); localStorage.removeItem("dmhcu:me"); }catch(err){}
+    } else if(t.dataset.back === "pick"){
+      leader = null; day = null; view = "pick";
+      try{ localStorage.removeItem("dmhcu:me"); }catch(err){}
+    } else { day = null; view = "days"; }
+    return render();
+  }
+  if(t.dataset.copytpl){
+    const ok = copyText(curTpl() || "");
+    flash(ok ? "Message copied" : "Copy failed \u2014 select the text above");
+    return;
+  }
+  if(t.dataset.copy){
+    const ok = copyText(msgFor(t.dataset.copy));
+    flash(ok ? "Message copied \u2014 paste it in the DM" : "Copy failed \u2014 select the text above");
+    return;
+  }
+  if(t.dataset.open){
+    copyText(msgFor(t.dataset.open));
+    flash("Message copied \u2014 long-press the box and paste");
+    push(t.dataset.open, {sent:true});
+    return;
+  }
+  if(t.dataset.check){ push(t.dataset.check, {sent: !sent(t.dataset.check)}); return; }
+});
+
+document.addEventListener("change", e => {
+  if(e.target.dataset && e.target.dataset.resp){
+    const v = e.target.value;
+    push(e.target.dataset.resp, {response: v || null, sent: v ? true : sent(e.target.dataset.resp)});
+  }
+});
+
+/* ---------------- boot ---------------- */
+try{
+  const a = localStorage.getItem("dmhcu:area");
+  if(a !== null && AREAS[Number(a)]){
+    area = Number(a); view = "pick";
+    const me = localStorage.getItem("dmhcu:me");
+    if(me !== null && AREAS[area].leaders[Number(me)]){ leader = Number(me); view = "days"; }
+  }
+}catch(e){}
+
+render();
+pull(true);
+setInterval(() => pull(false), 4000);
+document.addEventListener("visibilitychange", () => { if(!document.hidden) pull(false); });
+</script>
+</body>
+</html>
